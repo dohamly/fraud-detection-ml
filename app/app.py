@@ -3,10 +3,6 @@ app.py — FraudGuard AI · Fraud Detection Dashboard
 -----------------------------------------------------
 Lancement :
     streamlit run app/app.py
-
-Interface redessinée (thème sombre, cartes, jauge circulaire) pour se
-rapprocher d'un vrai dashboard produit, tout en gardant la même logique
-métier : modèle XGBoost entraîné + explication SHAP par transaction.
 """
 
 import json
@@ -30,7 +26,7 @@ TREE_MODELS = ("Random Forest", "XGBoost")
 st.set_page_config(page_title="FraudGuard AI", page_icon="🛡️", layout="wide")
 
 # ---------------------------------------------------------------------------
-# CSS — cartes, badges, jauge, bouton dégradé
+# CSS
 # ---------------------------------------------------------------------------
 st.markdown(
     """
@@ -70,6 +66,15 @@ st.markdown(
     .fg-info-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #1e293b; font-size: 0.88rem; }
     .fg-info-label { color: #64748b; }
     .fg-info-value { color: #e2e8f0; font-weight: 600; }
+
+    .fg-placeholder {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 40px 20px; color: #64748b;
+    }
+    .fg-placeholder-icon {
+        width: 44px; height: 44px; border-radius: 50%; background: #131a29;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 14px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -182,10 +187,10 @@ with head_right:
     )
 
 st.write("")
-tab_dashboard, tab_insights = st.tabs(["Dashboard", "Model Insights"])
+tab_dashboard, tab_prediction, tab_insights = st.tabs(["Dashboard", "Prediction", "Model Insights"])
 
 # ---------------------------------------------------------------------------
-# TAB 1 — Dashboard (hero + formulaire + prédiction)
+# TAB 1 — Dashboard (hero uniquement)
 # ---------------------------------------------------------------------------
 with tab_dashboard:
     with st.container(border=True):
@@ -203,13 +208,23 @@ with tab_dashboard:
         )
         s1, s2, s3 = st.columns(3)
         with s1:
-            st.markdown(f'<div class="fg-stat-value">{roc_auc:.3f}</div><div class="fg-stat-label">ROC-AUC</div>' if roc_auc else '<div class="fg-stat-value">—</div><div class="fg-stat-label">ROC-AUC</div>', unsafe_allow_html=True)
+            val = f"{roc_auc:.3f}" if roc_auc else "—"
+            st.markdown(f'<div class="fg-stat-value">{val}</div><div class="fg-stat-label">ROC-AUC</div>', unsafe_allow_html=True)
         with s2:
             st.markdown('<div class="fg-stat-value">PaySim</div><div class="fg-stat-label">Dataset</div>', unsafe_allow_html=True)
         with s3:
             st.markdown('<div class="fg-stat-value">Binary</div><div class="fg-stat-label">Task</div>', unsafe_allow_html=True)
 
     st.write("")
+    st.caption(
+        "Educational project — trained on PaySim-schema synthetic data. "
+        "Not intended for production use without retraining and validation on real-world data."
+    )
+
+# ---------------------------------------------------------------------------
+# TAB 2 — Prediction (formulaire + jauge + explication)
+# ---------------------------------------------------------------------------
+with tab_prediction:
     col_form, col_result = st.columns([3, 2], gap="medium")
 
     with col_form:
@@ -285,9 +300,22 @@ with tab_dashboard:
             html_rows = "".join(f'<div class="fg-info-row"><span class="fg-info-label">{k}</span><span class="fg-info-value">{v}</span></div>' for k, v in rows)
             st.markdown(html_rows, unsafe_allow_html=True)
 
-    # --- Explication (affichée en pleine largeur sous les 2 colonnes) ---
-    if submitted:
-        st.write("")
+    st.write("")
+
+    # --- Zone pleine largeur sous les 2 colonnes : placeholder OU explication ---
+    if not submitted:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div class="fg-placeholder">
+                    <div class="fg-placeholder-icon">ⓘ</div>
+                    <div>Fill in the transaction details above and click <strong style="color:#cbd5e1;">Analyze transaction</strong>
+                    to see the AI prediction and SHAP explanation.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
         with st.container(border=True):
             st.markdown('<div class="fg-section-label">Why this prediction?</div>', unsafe_allow_html=True)
             st.markdown(
@@ -315,7 +343,7 @@ with tab_dashboard:
     )
 
 # ---------------------------------------------------------------------------
-# TAB 2 — Model Insights (figures déjà générées par src/train.py)
+# TAB 3 — Model Insights
 # ---------------------------------------------------------------------------
 with tab_insights:
     figures = [
