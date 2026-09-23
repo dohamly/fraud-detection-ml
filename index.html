@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FraudGuard AI</title>
+<style>
+  :root {
+    --bg: #0a0f1a; --panel: #0f1729; --border: #1e293b; --border2: #263349;
+    --text: #f1f5f9; --muted: #94a3b8; --dim: #64748b;
+    --blue: #3b82f6; --blue2: #38bdf8; --green: #4ade80; --red: #f87171;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .mono { font-family: "SF Mono", Consolas, monospace; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  header { display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
+    flex-wrap: wrap; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon { width: 42px; height: 42px; border-radius: 11px;
+    background: linear-gradient(135deg, var(--blue), var(--blue2));
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .brand-name { font-weight: 800; font-size: 1.05rem; line-height: 1.1; }
+  .brand-sub { font-size: 0.66rem; color: var(--dim); letter-spacing: 0.08em; }
+  nav { display: flex; gap: 4px; }
+  nav button { background: none; border: none; color: var(--dim); font-size: 0.92rem;
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500;
+    transition: background 0.15s, color 0.15s; }
+  nav button.active { background: #16213a; color: var(--text); }
+  nav button:hover:not(.active) { color: var(--muted); }
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+  .insight-card { margin-top: 20px; }
+  .insight-title { font-weight: 700; font-size: 0.95rem; margin: 0 0 14px; }
+  .insight-placeholder { height: 220px; border-radius: 10px; background: #0a0f1c;
+    border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center;
+    color: var(--dim); font-size: 0.85rem; text-align: center; padding: 20px; }
+  .insight-placeholder img { max-width: 100%; border-radius: 8px; }
+  .api-status { margin-top: 12px; font-size: 0.8rem; text-align: center; color: var(--dim); }
+  .api-status.err { color: var(--red); }
+  .api-status.ok { color: var(--green); }
+  .head-right { display: flex; gap: 10px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px;
+    border-radius: 999px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; }
+  .badge-online { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .badge-model { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  .hero { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; align-items: center; margin-bottom: 24px; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+    border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+    background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); margin-bottom: 18px; }
+  h1 { font-size: 2rem; font-weight: 800; line-height: 1.18; margin: 0 0 16px; }
+  h1 span { color: #60a5fa; }
+  .lead { color: var(--muted); font-size: 0.96rem; max-width: 560px; line-height: 1.6; margin: 0 0 26px; }
+  .stats { display: flex; gap: 36px; }
+  .stat-value { font-size: 1.35rem; font-weight: 700; }
+  .stat-label { font-size: 0.66rem; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
+
+  .hero-graphic { position: relative; height: 220px; display: flex; align-items: center; justify-content: center; }
+  .ring-outer { position: absolute; width: 190px; height: 190px; border-radius: 50%; border: 1px solid rgba(96,165,250,0.18); }
+  .ring-inner { position: absolute; width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.3);
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(59,130,246,0.15); }
+  .ring-inner svg { width: 46px; height: 46px; filter: drop-shadow(0 0 8px rgba(96,165,250,0.5)); }
+  .deco-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--blue2);
+    box-shadow: 0 0 8px rgba(56,189,248,0.8); }
+
+  .footnote { color: var(--dim); font-size: 0.82rem; text-align: center; margin-top: 18px; line-height: 1.6; }
+
+  .grid { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; margin-top: 24px; align-items: start; }
+  .section-title { font-weight: 700; font-size: 1.02rem; margin: 0 0 2px; display: flex; align-items: center; gap: 8px; }
+  .section-hint { color: var(--dim); font-size: 0.84rem; margin: 0 0 20px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 7px; }
+  .field input, .field select { width: 100%; background: #0a0f1c; border: 1px solid var(--border2);
+    border-radius: 9px; color: var(--text); padding: 11px 12px; font-size: 0.92rem; font-family: inherit;
+    transition: border-color 0.15s; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
+  .field input::placeholder { color: #475569; }
+
+  .toggle-group { display: flex; gap: 10px; }
+  .toggle-btn { flex: 1; background: #0a0f1c; border: 1px solid var(--border2); border-radius: 9px;
+    padding: 10px; color: var(--muted); font-weight: 600; font-size: 0.85rem; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s; }
+  .toggle-btn.on-clear { border-color: rgba(74,222,128,0.5); background: rgba(34,197,94,0.08); color: var(--green); }
+  .toggle-btn.on-flag { border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.08); color: var(--red); }
+
+  .analyze-btn { width: 100%; margin-top: 6px; background: linear-gradient(90deg, var(--blue), var(--blue2));
+    color: white; border: none; border-radius: 10px; padding: 13px; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s, transform 0.1s; }
+  .analyze-btn:hover { opacity: 0.9; }
+  .analyze-btn:active { transform: scale(0.99); }
+
+  .result-panel { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 220px; text-align: center; }
+  .gauge { width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--border2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: border-color 0.3s; }
+  .gauge .pct { font-size: 1.7rem; font-weight: 800; color: var(--green); }
+  .gauge .lbl { font-size: 0.78rem; color: var(--dim); margin-top: 2px; }
+  .placeholder-text { color: var(--dim); font-size: 0.88rem; margin-top: 16px; line-height: 1.6; }
+
+  .info-list { margin-top: 20px; }
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--dim); }
+  .info-value { color: #e2e8f0; font-weight: 600; }
+
+  @media (max-width: 760px) {
+    .hero, .grid { grid-template-columns: 1fr; }
+    .hero-graphic { display: none; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <div class="brand-name">FraudGuard AI</div>
+        <div class="brand-sub">FRAUD DETECTION</div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" onclick="showTab('dashboard', this)">Dashboard</button>
+      <button onclick="showTab('prediction', this)">Prediction</button>
+      <button onclick="showTab('insights', this)">Model Insights</button>
+    </nav>
+    <div class="head-right">
+      <span class="badge badge-online"><span class="dot"></span> Model online</span>
+      <span class="badge badge-model">⚡ XGBoost</span>
+    </div>
+  </header>
+
+  <div id="tab-dashboard" class="tab-section active">
+  <div class="panel">
+    <div class="hero">
+      <div>
+        <span class="hero-badge">● AI-POWERED RISK ANALYSIS</span>
+        <h1>Detect suspicious transactions<br><span>with AI</span></h1>
+        <p class="lead">Analyze transaction characteristics and estimate fraud risk using a trained XGBoost model with explainable AI. Real-time classification with SHAP-based interpretability.</p>
+        <div class="stats">
+          <div><div class="stat-value mono">0.995</div><div class="stat-label">ROC-AUC</div></div>
+          <div><div class="stat-value mono">PaySim</div><div class="stat-label">Dataset</div></div>
+          <div><div class="stat-value mono">Binary</div><div class="stat-label">Task</div></div>
+        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="deco-dot" style="top:18%; left:10%;"></div>
+        <div class="deco-dot" style="top:35%; left:90%;"></div>
+        <div class="deco-dot" style="top:80%; left:15%;"></div>
+        <div class="deco-dot" style="top:72%; left:85%;"></div>
+        <div class="ring-outer"></div>
+        <div class="ring-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+            <path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="footnote">Educational project — trained on PaySim-schema synthetic data.<br>Not intended for production use without retraining and validation on real-world data.</div>
+  </div>
+  </div>
+
+  <div id="tab-prediction" class="tab-section">
+  <div class="grid">
+    <div class="panel">
+      <div class="section-title">⇄ Transaction analysis</div>
+      <p class="section-hint">Enter the transaction details to run the fraud risk assessment.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Transaction type</label>
+          <select id="txType">
+            <option>TRANSFER</option><option>CASH_OUT</option><option>PAYMENT</option>
+            <option>CASH_IN</option><option>DEBIT</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input type="number" id="amount" placeholder="e.g. 182,950.00" value="182950">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Step (hour 1-744)</label>
+          <input type="number" id="step" placeholder="e.g. 312" value="312">
+        </div>
+        <div class="field">
+          <label>Flagged by system?</label>
+          <div class="toggle-group">
+            <button type="button" class="toggle-btn on-clear" id="btnClear" onclick="setFlag(false)">No — Clear</button>
+            <button type="button" class="toggle-btn" id="btnFlag" onclick="setFlag(true)">Yes — Flagged</button>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Sender balance before</label><input type="number" id="oldbalanceOrg" value="182950"></div>
+        <div class="field"><label>Sender balance after</label><input type="number" id="newbalanceOrig" value="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Receiver balance before</label><input type="number" id="oldbalanceDest" value="0"></div>
+        <div class="field"><label>Receiver balance after</label><input type="number" id="newbalanceDest" value="182950"></div>
+      </div>
+      <button class="analyze-btn" onclick="analyze()">⚡ Analyze transaction →</button>
+      <div class="api-status" id="apiStatus"></div>
+    </div>
+
+    <div class="panel">
+      <div class="result-panel" id="resultPanel">
+        <div class="gauge" id="gauge"><span class="pct mono" id="pct">0.0%</span><span class="lbl">probability</span></div>
+        <div class="placeholder-text" id="placeholderText">Prediction will appear after analysis</div>
+      </div>
+      <div class="info-list">
+        <div class="info-row"><span class="info-label">Model</span><span class="info-value" id="infoModel">—</span></div>
+        <div class="info-row"><span class="info-label">Task</span><span class="info-value">Binary classification</span></div>
+        <div class="info-row"><span class="info-label">Metric</span><span class="info-value">F1-score + ROC-AUC</span></div>
+        <div class="info-row"><span class="info-label">ROC-AUC</span><span class="info-value mono" id="infoRocAuc">—</span></div>
+        <div class="info-row"><span class="info-label">Dataset</span><span class="info-value">PaySim-schema synthetic</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="explainPanel" style="margin-top:20px; display:none;">
+    <div class="section-title">Why this prediction?</div>
+    <p class="section-hint" style="margin-bottom:16px;">The model considers several transaction characteristics, including transaction type, amount and balance inconsistencies.</p>
+    <div class="info-list" id="factorsList"></div>
+    <p class="section-hint" id="methodNote" style="margin-top:10px; margin-bottom:0;"></p>
+  </div>
+  </div>
+
+  <div id="tab-insights" class="tab-section">
+    <div id="insightsList"></div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = "http://localhost:8000"; // change this if your backend runs elsewhere
+
+  function showTab(name, btn) {
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (name === 'insights') loadInsights();
+  }
+
+  let flagged = false;
+  function setFlag(v) {
+    flagged = v;
+    document.getElementById('btnClear').className = 'toggle-btn' + (!v ? ' on-clear' : '');
+    document.getElementById('btnFlag').className = 'toggle-btn' + (v ? ' on-flag' : '');
+  }
+
+  async function analyze() {
+    const btn = document.querySelector('.analyze-btn');
+    const status = document.getElementById('apiStatus');
+    btn.disabled = true;
+    status.textContent = 'Analyzing…';
+    status.className = 'api-status';
+
+    const payload = {
+      step: parseInt(document.getElementById('step').value) || 1,
+      tx_type: document.getElementById('txType').value,
+      amount: parseFloat(document.getElementById('amount').value) || 0,
+      oldbalanceOrg: parseFloat(document.getElementById('oldbalanceOrg').value) || 0,
+      newbalanceOrig: parseFloat(document.getElementById('newbalanceOrig').value) || 0,
+      oldbalanceDest: parseFloat(document.getElementById('oldbalanceDest').value) || 0,
+      newbalanceDest: parseFloat(document.getElementById('newbalanceDest').value) || 0,
+      isFlaggedFraud: flagged,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `API error ${res.status}`);
+      }
+      const data = await res.json();
+      const pct = data.probability * 100;
+      const isFraud = data.prediction === 'FRAUD';
+
+      document.getElementById('pct').textContent = pct.toFixed(1) + '%';
+      document.getElementById('pct').style.color = isFraud ? 'var(--red)' : 'var(--green)';
+      document.getElementById('gauge').style.borderColor = isFraud ? 'rgba(248,113,113,0.5)' : 'rgba(74,222,128,0.5)';
+      document.getElementById('placeholderText').textContent = isFraud ? '🚨 FRAUD' : '✅ LEGITIMATE';
+      document.getElementById('infoModel').textContent = data.model;
+
+      const factorsList = document.getElementById('factorsList');
+      factorsList.innerHTML = data.top_factors.map((f, i) => {
+        const up = f.value > 0;
+        return `<div class="info-row"><span class="info-label">${i + 1}. ${f.feature}</span>
+          <span style="color:${up ? 'var(--red)' : 'var(--green)'}; font-weight:700;">
+          ${up ? '⬆' : '⬇'} ${f.value >= 0 ? '+' : ''}${f.value.toFixed(3)}</span></div>`;
+      }).join('');
+      document.getElementById('methodNote').textContent = data.method;
+      document.getElementById('explainPanel').style.display = 'block';
+
+      status.textContent = '';
+    } catch (e) {
+      status.textContent = `⚠️ Could not reach the API (${e.message}). Is the backend running on ${API_BASE}?`;
+      status.className = 'api-status err';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function loadModelInfo() {
+    try {
+      const res = await fetch(`${API_BASE}/model-info`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      document.getElementById('infoModel').textContent = data.model;
+      if (data.roc_auc) document.getElementById('infoRocAuc').textContent = data.roc_auc.toFixed(3);
+    } catch (e) {
+      // Backend not reachable yet — fields keep their placeholder "—".
+    }
+  }
+
+  let insightsLoaded = false;
+  async function loadInsights() {
+    if (insightsLoaded) return;
+    const list = document.getElementById('insightsList');
+    try {
+      const res = await fetch(`${API_BASE}/model-info`);
+      const data = await res.json();
+      if (!data.figures || !data.figures.length) {
+        list.innerHTML = `<div class="panel"><div class="insight-placeholder">No figures found in reports/figures/. Run your training script first.</div></div>`;
+        return;
+      }
+      list.innerHTML = data.figures.map(fname => `
+        <div class="panel insight-card">
+          <div class="insight-title">${fname}</div>
+          <div class="insight-placeholder"><img src="${API_BASE}/figures/${fname}" alt="${fname}"
+               onerror="this.parentElement.textContent='Could not load ${fname}'"></div>
+        </div>`).join('');
+      insightsLoaded = true;
+    } catch (e) {
+      list.innerHTML = `<div class="panel"><div class="insight-placeholder">⚠️ Could not reach the API at ${API_BASE}. Start the backend, then reopen this tab.</div></div>`;
+    }
+  }
+
+  loadModelInfo();
+</script>
+</body>
+</html>

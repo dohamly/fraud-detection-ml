@@ -75,6 +75,23 @@ st.markdown(
         width: 44px; height: 44px; border-radius: 50%; background: #131a29;
         display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 14px;
     }
+
+    .fg-hero-graphic { position: relative; width: 100%; height: 230px; display:flex; align-items:center; justify-content:center; }
+    .fg-hero-ring-outer {
+        position: absolute; width: 210px; height: 210px; border-radius: 50%;
+        border: 1px solid rgba(96,165,250,0.18);
+    }
+    .fg-hero-ring-inner {
+        position: absolute; width: 130px; height: 130px; border-radius: 50%;
+        background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.3);
+        display:flex; align-items:center; justify-content:center;
+        box-shadow: 0 0 30px rgba(59,130,246,0.15);
+    }
+    .fg-hero-shield { font-size: 2.4rem; filter: drop-shadow(0 0 8px rgba(96,165,250,0.5)); }
+    .fg-hero-dot {
+        position: absolute; width: 8px; height: 8px; border-radius: 50%;
+        background: #38bdf8; box-shadow: 0 0 8px rgba(56,189,248,0.8);
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -194,26 +211,42 @@ tab_dashboard, tab_prediction, tab_insights = st.tabs(["Dashboard", "Prediction"
 # ---------------------------------------------------------------------------
 with tab_dashboard:
     with st.container(border=True):
-        st.markdown('<span class="fg-badge fg-badge-hero">● AI-POWERED RISK ANALYSIS</span>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="fg-title">Detect suspicious transactions<br>'
-            '<span class="fg-title-accent">with AI</span></div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<p class="fg-subtitle">Analyze transaction characteristics and estimate fraud risk using a '
-            "trained XGBoost model with explainable AI. Real-time classification with SHAP-based "
-            "interpretability.</p>",
-            unsafe_allow_html=True,
-        )
-        s1, s2, s3 = st.columns(3)
-        with s1:
-            val = f"{roc_auc:.3f}" if roc_auc else "—"
-            st.markdown(f'<div class="fg-stat-value">{val}</div><div class="fg-stat-label">ROC-AUC</div>', unsafe_allow_html=True)
-        with s2:
-            st.markdown('<div class="fg-stat-value">PaySim</div><div class="fg-stat-label">Dataset</div>', unsafe_allow_html=True)
-        with s3:
-            st.markdown('<div class="fg-stat-value">Binary</div><div class="fg-stat-label">Task</div>', unsafe_allow_html=True)
+        hero_left, hero_right = st.columns([3, 2], gap="medium")
+        with hero_left:
+            st.markdown('<span class="fg-badge fg-badge-hero">● AI-POWERED RISK ANALYSIS</span>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="fg-title">Detect suspicious transactions<br>'
+                '<span class="fg-title-accent">with AI</span></div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                '<p class="fg-subtitle">Analyze transaction characteristics and estimate fraud risk using a '
+                "trained XGBoost model with explainable AI. Real-time classification with SHAP-based "
+                "interpretability.</p>",
+                unsafe_allow_html=True,
+            )
+            s1, s2, s3 = st.columns(3)
+            with s1:
+                val = f"{roc_auc:.3f}" if roc_auc else "—"
+                st.markdown(f'<div class="fg-stat-value">{val}</div><div class="fg-stat-label">ROC-AUC</div>', unsafe_allow_html=True)
+            with s2:
+                st.markdown('<div class="fg-stat-value">PaySim</div><div class="fg-stat-label">Dataset</div>', unsafe_allow_html=True)
+            with s3:
+                st.markdown('<div class="fg-stat-value">Binary</div><div class="fg-stat-label">Task</div>', unsafe_allow_html=True)
+        with hero_right:
+            st.markdown(
+                """
+                <div class="fg-hero-graphic">
+                  <div class="fg-hero-dot" style="top:22%; left:8%;"></div>
+                  <div class="fg-hero-dot" style="top:38%; left:88%;"></div>
+                  <div class="fg-hero-dot" style="top:78%; left:14%;"></div>
+                  <div class="fg-hero-dot" style="top:70%; left:82%;"></div>
+                  <div class="fg-hero-ring-outer"></div>
+                  <div class="fg-hero-ring-inner"><span class="fg-hero-shield">🛡️</span></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.write("")
     st.caption(
