@@ -93,3 +93,22 @@ def single_transaction_to_frame(
             }
         ]
     )
+
+
+# Libellés lisibles pour l'explication affichée dans l'app (section "Top factors")
+FEATURE_LABELS = {
+    "step": "moment de la transaction (step)",
+    "amount": "montant de la transaction",
+    "oldbalanceOrg": "solde émetteur avant transaction",
+    "newbalanceOrig": "solde émetteur après transaction",
+    "oldbalanceDest": "solde destinataire avant transaction",
+    "newbalanceDest": "solde destinataire après transaction",
+    "isFlaggedFraud": "signalement automatique du système",
+    "errorBalanceOrig": "incohérence de solde côté émetteur",
+    "errorBalanceDest": "incohérence de solde côté destinataire",
+    "type_CASH_IN": "type de transaction (dépôt)",
+    "type_CASH_OUT": "type de transaction (retrait)",
+    "type_DEBIT": "type de transaction (débit)",
+    "type_PAYMENT": "type de transaction (paiement)",
+    "type_TRANSFER": "type de transaction (virement)",
+}

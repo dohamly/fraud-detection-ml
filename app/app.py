@@ -4,22 +4,27 @@ app.py — Interface interactive de détection de fraude
 Lancement :
     streamlit run app/app.py
 
-L'utilisateur saisit les caractéristiques d'une transaction et obtient
-une prédiction Fraude / Légitime avec la probabilité associée, produite
-par le meilleur modèle entraîné (src/train.py).
+L'utilisateur saisit les caractéristiques d'une transaction et obtient :
+- une prédiction Fraude / Légitime avec la probabilité associée
+- une explication (SHAP pour les modèles à arbres, contribution des
+  coefficients pour la régression logistique) : les facteurs qui ont le
+  plus pesé sur la décision du modèle pour CETTE transaction précise.
 """
 
 import os
 import sys
 
 import joblib
+import numpy as np
 import pandas as pd
+import shap
 import streamlit as st
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from preprocessing import prepare_model_frame, single_transaction_to_frame  # noqa: E402
+from preprocessing import FEATURE_LABELS, prepare_model_frame, single_transaction_to_frame  # noqa: E402
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models")
+TREE_MODELS = ("Random Forest", "XGBoost")
 
 st.set_page_config(page_title="Détection de fraude", page_icon="🏦", layout="centered")
 
@@ -35,6 +40,33 @@ def load_artifacts():
     return model, scaler, feature_names, best_model_name
 
 
+@st.cache_resource
+def get_explainer(_model, model_name):
+    """SHAP TreeExplainer pour les modèles à arbres (rapide, exact)."""
+    if model_name in TREE_MODELS:
+        return shap.TreeExplainer(_model)
+    return None
+
+
+def top_factors(model, model_name, explainer, X_scaled_row, feature_names, top_n=4):
+    """
+    Retourne les `top_n` variables qui ont le plus influencé la prédiction
+    pour cette transaction, avec le sens de leur effet.
+    - Modèles à arbres (RF, XGBoost) : valeurs SHAP exactes (TreeExplainer).
+    - Logistic Regression : contribution linéaire (coefficient x valeur
+      standardisée), équivalente à une valeur SHAP pour un modèle linéaire.
+    """
+    if explainer is not None:
+        raw = explainer.shap_values(X_scaled_row)
+        values = raw[0] if isinstance(raw, list) else raw[0]
+        values = np.asarray(values).reshape(-1)
+    else:
+        values = (model.coef_[0] * X_scaled_row[0]).reshape(-1)
+
+    order = np.argsort(-np.abs(values))[:top_n]
+    return [(feature_names[i], values[i]) for i in order]
+
+
 st.title("🏦 Détection de fraude bancaire")
 st.caption("Saisis les caractéristiques d'une transaction pour estimer si elle est frauduleuse.")
 
@@ -46,6 +78,8 @@ except FileNotFoundError:
         "```bash\npython data/generate_sample_data.py\npython src/train.py\n```"
     )
     st.stop()
+
+explainer = get_explainer(model, best_model_name)
 
 st.info(f"Modèle utilisé : **{best_model_name}**")
 
@@ -83,6 +117,7 @@ if submitted:
     prediction = int(proba_fraud >= 0.5)
 
     st.divider()
+    st.subheader("Prediction")
     if prediction == 1:
         st.error(f"### 🚨 Transaction FRAUDULEUSE (probabilité : {proba_fraud:.1%})")
     else:
@@ -93,6 +128,30 @@ if submitted:
         "Seuil de décision : 50%. Ajuste ce seuil dans le code (app/app.py) selon le "
         "compromis précision/recall souhaité en production."
     )
+
+    # --- A. Explication générale ---
+    st.markdown("#### Why this prediction?")
+    st.write(
+        "Le modèle prend en compte plusieurs caractéristiques de la transaction, "
+        "notamment le type de transaction, le montant, ainsi que les éventuelles "
+        "incohérences entre les soldes déclarés avant/après la transaction."
+    )
+
+    # --- B. Top facteurs (SHAP pour RF/XGBoost, contribution linéaire pour Logistic Regression) ---
+    factors = top_factors(model, best_model_name, explainer, X_scaled, feature_names)
+
+    st.markdown("**Top factors influencing this prediction:**")
+    for rank, (feat, val) in enumerate(factors, start=1):
+        label = FEATURE_LABELS.get(feat, feat)
+        direction = "⬆️ augmente" if val > 0 else "⬇️ diminue"
+        st.write(f"{rank}. **{label}** — {direction} le risque de fraude (impact : {val:+.3f})")
+
+    method_note = (
+        "Valeurs SHAP exactes (TreeExplainer)."
+        if best_model_name in TREE_MODELS
+        else "Contribution linéaire (coefficient × valeur standardisée) — équivalent SHAP pour un modèle linéaire."
+    )
+    st.caption(method_note)
 
 st.divider()
 st.caption(
