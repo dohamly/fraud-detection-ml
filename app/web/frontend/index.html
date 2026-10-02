@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FraudGuard AI</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <div class="brand-name">FraudGuard AI</div>
+        <div class="brand-sub">FRAUD DETECTION</div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" onclick="showTab('dashboard', this)">Dashboard</button>
+      <button onclick="showTab('prediction', this)">Prediction</button>
+      <button onclick="showTab('insights', this)">Model Insights</button>
+    </nav>
+    <div class="head-right">
+      <span class="badge badge-online"><span class="dot"></span> Model online</span>
+      <span class="badge badge-model">⚡ XGBoost</span>
+    </div>
+  </header>
+
+  <div id="tab-dashboard" class="tab-section active">
+  <div class="panel">
+    <div class="hero">
+      <div>
+        <span class="hero-badge">● AI-POWERED RISK ANALYSIS</span>
+        <h1>Detect suspicious transactions<br><span>with AI</span></h1>
+        <p class="lead">Analyze transaction characteristics and estimate fraud risk using a trained XGBoost model with explainable AI. Real-time classification with SHAP-based interpretability.</p>
+        <div class="stats">
+          <div><div class="stat-value mono">0.995</div><div class="stat-label">ROC-AUC</div></div>
+          <div><div class="stat-value mono">PaySim</div><div class="stat-label">Dataset</div></div>
+          <div><div class="stat-value mono">Binary</div><div class="stat-label">Task</div></div>
+        </div>
+      </div>
+      <div class="hero-graphic">
+        <div class="deco-dot" style="top:18%; left:10%;"></div>
+        <div class="deco-dot" style="top:35%; left:90%;"></div>
+        <div class="deco-dot" style="top:80%; left:15%;"></div>
+        <div class="deco-dot" style="top:72%; left:85%;"></div>
+        <div class="ring-outer"></div>
+        <div class="ring-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+            <path d="M12 2 L20 5 V11 C20 16 16.5 20 12 22 C7.5 20 4 16 4 11 V5 Z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div class="footnote">Educational project — trained on PaySim-schema synthetic data.<br>Not intended for production use without retraining and validation on real-world data.</div>
+  </div>
+  </div>
+
+  <div id="tab-prediction" class="tab-section">
+  <div class="grid">
+    <div class="panel">
+      <div class="section-title">⇄ Transaction analysis</div>
+      <p class="section-hint">Enter the transaction details to run the fraud risk assessment.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Transaction type</label>
+          <select id="txType">
+            <option>TRANSFER</option><option>CASH_OUT</option><option>PAYMENT</option>
+            <option>CASH_IN</option><option>DEBIT</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input type="number" id="amount" placeholder="e.g. 182,950.00" value="182950">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Step (hour 1-744)</label>
+          <input type="number" id="step" placeholder="e.g. 312" value="312">
+        </div>
+        <div class="field">
+          <label>Flagged by system?</label>
+          <div class="toggle-group">
+            <button type="button" class="toggle-btn on-clear" id="btnClear" onclick="setFlag(false)">No — Clear</button>
+            <button type="button" class="toggle-btn" id="btnFlag" onclick="setFlag(true)">Yes — Flagged</button>
+          </div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Sender balance before</label><input type="number" id="oldbalanceOrg" value="182950"></div>
+        <div class="field"><label>Sender balance after</label><input type="number" id="newbalanceOrig" value="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Receiver balance before</label><input type="number" id="oldbalanceDest" value="0"></div>
+        <div class="field"><label>Receiver balance after</label><input type="number" id="newbalanceDest" value="182950"></div>
+      </div>
+      <button class="analyze-btn" onclick="analyze()">⚡ Analyze transaction →</button>
+      <div class="api-status" id="apiStatus"></div>
+    </div>
+
+    <div class="panel">
+      <div class="result-panel" id="resultPanel">
+        <div class="gauge" id="gauge"><span class="pct mono" id="pct">0.0%</span><span class="lbl">probability</span></div>
+        <div class="placeholder-text" id="placeholderText">Prediction will appear after analysis</div>
+      </div>
+      <div class="info-list">
+        <div class="info-row"><span class="info-label">Model</span><span class="info-value" id="infoModel">—</span></div>
+        <div class="info-row"><span class="info-label">Task</span><span class="info-value">Binary classification</span></div>
+        <div class="info-row"><span class="info-label">Metric</span><span class="info-value">F1-score + ROC-AUC</span></div>
+        <div class="info-row"><span class="info-label">ROC-AUC</span><span class="info-value mono" id="infoRocAuc">—</span></div>
+        <div class="info-row"><span class="info-label">Dataset</span><span class="info-value">PaySim-schema synthetic</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="explainPanel" style="margin-top:20px; display:none;">
+    <div class="section-title">Why this prediction?</div>
+    <p class="section-hint" style="margin-bottom:16px;">The model considers several transaction characteristics, including transaction type, amount and balance inconsistencies.</p>
+    <div class="info-list" id="factorsList"></div>
+    <p class="section-hint" id="methodNote" style="margin-top:10px; margin-bottom:0;"></p>
+  </div>
+  </div>
+
+  <div id="tab-insights" class="tab-section">
+    <div id="insightsList"></div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

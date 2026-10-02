@@ -1,25 +1,29 @@
 """
-FraudGuard AI — FastAPI backend
---------------------------------
-Serves the same XGBoost/Random Forest/Logistic Regression model your
-Streamlit app (app/app.py) uses, over a REST API, so a plain HTML/JS
-frontend (index.html) can call it instead of running inside Streamlit.
+FraudGuard AI — FastAPI backend (full web app)
+------------------------------------------------
+This is the "main product" of the project: a REST API serving the same
+trained model (XGBoost + SHAP) as the lightweight Streamlit demo
+(app/streamlit/app.py), consumed by the HTML/CSS/JS frontend in
+app/web/frontend/.
 
-Expects this project layout (main.py lives at the repo root):
+Project layout:
     fraud-detection-ml/
-      app/app.py
+      app/
+        streamlit/app.py          <- quick ML demo (Streamlit)
+        web/
+          backend/main.py         <- this file (FastAPI)
+          frontend/index.html, style.css, script.js
       models/best_model.txt, <model>.joblib, scaler.joblib, feature_names.joblib
       reports/metrics.json, reports/figures/*.png
-      src/preprocessing.py   (FEATURE_LABELS, prepare_model_frame, single_transaction_to_frame)
-      main.py                <-- this file
-      index.html
+      src/preprocessing.py        (FEATURE_LABELS, prepare_model_frame, single_transaction_to_frame)
 
 Run from the repo root:
     pip install -r requirements.txt
-    uvicorn main:app --reload --port 8000
+    uvicorn app.web.backend.main:app --reload --port 8000
 
-Docs:
-    http://localhost:8000/docs
+The frontend is served automatically at the same address:
+    http://localhost:8000/            (app/web/frontend/index.html)
+    http://localhost:8000/docs        (Swagger, auto-generated API docs)
 """
 
 import json
@@ -33,13 +37,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-BASE_DIR = os.path.dirname(__file__)
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-FIG_DIR = os.path.join(BASE_DIR, "reports", "figures")
-METRICS_PATH = os.path.join(BASE_DIR, "reports", "metrics.json")
+# main.py vit maintenant dans app/web/backend/ -> la racine du repo est 3 niveaux au-dessus
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+MODEL_DIR = os.path.join(REPO_ROOT, "models")
+FIG_DIR = os.path.join(REPO_ROOT, "reports", "figures")
+METRICS_PATH = os.path.join(REPO_ROOT, "reports", "metrics.json")
+FRONTEND_DIR = os.path.join(REPO_ROOT, "app", "web", "frontend")
 TREE_MODELS = ("Random Forest", "XGBoost")
 
-sys.path.append(os.path.join(BASE_DIR, "src"))
+sys.path.append(os.path.join(REPO_ROOT, "src"))
 try:
     from preprocessing import FEATURE_LABELS, prepare_model_frame, single_transaction_to_frame  # noqa: E402
 except ImportError as e:  # pragma: no cover
@@ -176,3 +182,11 @@ def predict(tx: TransactionIn):
         "top_factors": top_factors,
         "method": "SHAP values (TreeExplainer)" if best_model_name in TREE_MODELS else "Linear contribution",
     }
+
+
+# Sert le frontend (index.html, style.css, script.js) sur "/", en DERNIER
+# (après toutes les routes API ci-dessus) pour ne jamais les masquer :
+# une requête est d'abord testée contre /health, /model-info, /predict,
+# /figures, et seulement si rien ne correspond, contre les fichiers statiques.
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

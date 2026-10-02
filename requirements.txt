@@ -1,8 +1,18 @@
-fastapi
-uvicorn[standard]
-joblib
-numpy
-pandas
-scikit-learn
-xgboost
-shap
+# --- Core ML pipeline (notebook, src/train.py) ---
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+seaborn>=0.13
+scikit-learn>=1.3
+imbalanced-learn>=0.12
+xgboost>=2.0
+shap>=0.45
+joblib>=1.3
+jupyter>=1.0
+
+# --- Quick demo: app/streamlit/app.py ---
+streamlit>=1.30
+
+# --- Full web app: app/web/backend/main.py + app/web/frontend/ ---
+fastapi>=0.110
+uvicorn[standard]>=0.29

@@ -14,16 +14,16 @@ import numpy as np
 import shap
 import streamlit as st
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 from preprocessing import FEATURE_LABELS, prepare_model_frame, single_transaction_to_frame  # noqa: E402
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 FIG_DIR = os.path.join(BASE_DIR, "reports", "figures")
 METRICS_PATH = os.path.join(BASE_DIR, "reports", "metrics.json")
 TREE_MODELS = ("Random Forest", "XGBoost")
 
-st.set_page_config(page_title="FraudGuard AI", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="FraudGuard AI · Quick Demo", page_icon="🛡️", layout="wide")
 
 # ---------------------------------------------------------------------------
 # CSS
@@ -186,7 +186,7 @@ with head_left:
                       display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🛡️</div>
           <div>
             <div style="font-weight:800; font-size:1.15rem; color:#f1f5f9; line-height:1.1;">FraudGuard AI</div>
-            <div style="font-size:0.68rem; color:#64748b; letter-spacing:0.08em;">FRAUD DETECTION</div>
+            <div style="font-size:0.68rem; color:#64748b; letter-spacing:0.08em;">QUICK ML DEMO</div>
           </div>
         </div>
         """,
@@ -204,7 +204,7 @@ with head_right:
     )
 
 st.write("")
-tab_dashboard, tab_prediction, tab_insights = st.tabs(["Dashboard", "Prediction", "Model Insights"])
+tab_dashboard, tab_prediction, tab_insights = st.tabs(["Dashboard", "Prediction", "Results"])
 
 # ---------------------------------------------------------------------------
 # TAB 1 — Dashboard (hero uniquement)
@@ -376,13 +376,13 @@ with tab_prediction:
     )
 
 # ---------------------------------------------------------------------------
-# TAB 3 — Model Insights
+# TAB 3 — Results (version allégée : les 2 graphiques clés seulement.
+# Le dashboard complet "Model Performance" se trouve dans l'app web FastAPI.)
 # ---------------------------------------------------------------------------
 with tab_insights:
+    st.caption("Quick overview — see the full FraudGuard AI web app for the complete Model Performance dashboard.")
     figures = [
         ("05_model_comparison.png", "Model comparison — Precision / Recall / F1 / ROC-AUC"),
-        ("07_confusion_matrices.png", "Confusion matrices"),
-        ("08_feature_importance.png", "Feature importance (Random Forest & XGBoost)"),
         ("09_shap_summary.png", "SHAP summary plot (XGBoost)"),
     ]
     any_found = False
